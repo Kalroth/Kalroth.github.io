@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons' rel="stylesheet">
+	<link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+<body>
+	<div id="app">
+		<v-app>
+			<v-toolbar app fixed clipped-left>
+				<v-toolbar-title>Create Radarr/Sonarr preferred tags or indexer restrictions</v-toolbar-title>
+			</v-toolbar>
+
+			<v-content>
+				<v-container>
+					Filter release groups
+					<v-select v-model="qualitySelections" :key="qualities.name"
+						:items="qualities" item-text="name" item-value="id"
+						label="Select one or more qualities" multiple chips dense></v-select>
+					<v-btn @click="updateQualitySelection()">Update</v-btn>
+					<v-btn @click="clearQualityFilter()">Clear</v-btn>
+				</v-container>
+
+				<v-container>
+					Radarr preferred tags or Sonarr/Radarr indexer restrictions
+					<v-layout row wrap>
+						<v-flex md12>
+							<v-textarea ref="textGeneratedTags" box auto-grow :readonly="true" browser-autocomplete="false"
+								v-model="generatedTags"	@focus="$event.target.select()" />
+						</v-flex>
+						<v-flex md12>
+							<v-btn @click="generateTags()">Generate tags</v-btn>
+						</v-flex>
+					</v-layout>
+				</v-container>
+
+				<v-container>
+					<v-list subheader>
+						<v-subheader>Release groups</v-subheader>
+
+						<v-list-tile :value="true" v-for="(group, i) in groups" :key="groups.name" v-if="group.visible">
+							<v-list-tile-action>
+								<v-checkbox v-model="group.checked"></v-checkbox>
+							</v-list-tile-action>
+
+							<v-list-tile-content>
+								<v-list-tile-title>
+									<v-layout row wrap>
+										<v-flex md6>
+											-{{ group.name }}
+										</v-flex>
+										<v-flex md6>
+											<p align="right" v-html="qualitiesToText(group.releaseQualities)"/>
+										</v-flex>
+									</v-layout>
+								</v-list-tile-title>
+							</v-list-tile-content>
+						</v-list-tile>
+					</v-list>
+				</v-container>
+			</v-content>
+		</v-app>
+	</div>
+ 
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+	<script>
+		const hdtv720p = 1;
+		const hdtv1080p = 2;
+		const web720p = 4;
+		const web1080p = 8;
+		const bluray720p = 16;
+		const bluray1080p = 32;
+		const remux1080p = 64;
+		const remux2160p = 128;
+
+		new Vue({
+			el: '#app',
+
+			data: () => ({
+				qualitySelections : [],
+				generatedTags : "",
+				groups : [
+					// Scene
+					{ scene: true, name: "AMIABLE", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "DRONES", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "PSYCHD", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "SPARKS", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "GECKOS", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "ROVERS", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "BLOW", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "Replica", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "FLAME", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "BiPOLAR", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "USURY", releaseQualities: [bluray720p, bluray1080p] },
+					{ scene: true, name: "GHOULS", releaseQualities: [bluray720p, bluray1080p] },
+					// Non-scene
+					{	scene: false,	name: "FraMeSToR", releaseQualities: [remux1080p, remux2160p] },
+					{	scene: false, name: "EPSiLON", releaseQualities: [remux1080p, remux2160p] },
+					{	scene: false,	name: "FGT", releaseQualities: [bluray720p, bluray1080p, remux1080p, remux2160p] },
+					{ scene: false, name: "HDMaNiaCS", releaseQualities: [bluray720p, bluray1080p, remux1080p, remux2160p] },
+				],
+
+				qualities : [
+					{ id: hdtv720p,	name: "HDTV 720p" },
+					{ id: hdtv1080p,	name: "HDTV 1080p" },
+					{ id: web720p,	name: "WEB 720p" },
+					{ id: web1080p,	name: "WEB 1080p" },
+					{ id: bluray720p,	name: "BluRay 720p" },
+					{ id: bluray1080p,	name: "BluRay 1080p" },
+					{ id: remux1080p,	name: "BluRay 1080p REMUX" },
+					{ id: remux2160p,	name: "BluRay 2160p REMUX" },
+				],
+			}),
+			created: function() {
+				this.updateQualitySelection();
+			},
+			methods: {
+				generateTags() {
+
+					this.generatedTags = "";
+					var s = "";
+					for (var i = 0; i < this.groups.length; i++) {
+						if (this.groups[i].checked == true)
+						{
+							s += "-" + this.groups[i].name + ",";
+						}
+					}
+					this.generatedTags = s;
+					this.$refs.textGeneratedTags.focus();
+					this.$refs.textGeneratedTags.$refs.input.select();
+				},
+				updateQualitySelection() {
+					if (this.qualitySelections.length == 0)
+					{
+						for (var g = this.groups.length - 1; g >= 0; g--) {
+							if ('visible' in this.groups[g]) { this.groups[g].visible = false; } else { this.$set(this.groups[g], 'visible', false); }
+							if ('checked' in this.groups[g]) { this.groups[g].checked = false; } else { this.$set(this.groups[g], 'checked', false); }
+						}
+						return;
+					}
+
+					for (var q = this.qualitySelections.length - 1; q >= 0; q--) {
+						var quality_id = this.qualitySelections[q];
+
+						for (var g = this.groups.length - 1; g >= 0; g--) {
+							if (this.groups[g].releaseQualities.indexOf(quality_id) > -1) {
+								if ('visible' in this.groups[g]) { this.groups[g].visible = true; } else { this.$set(this.groups[g], 'visible', true); }
+								if ('checked' in this.groups[g]) { this.groups[g].checked = true; } else { this.$set(this.groups[g], 'checked', true); }
+							}
+							else
+							{
+								if ('visible' in this.groups[g]) { this.groups[g].visible = false; } else { this.$set(this.groups[g], 'visible', false); }
+								if ('checked' in this.groups[g]) { this.groups[g].checked = false; } else { this.$set(this.groups[g], 'checked', false); }
+							}
+							
+						}
+					}
+				},
+				clearQualityFilter() {
+					this.qualitySelections = [];
+					this.updateQualitySelection();
+				},
+				qualitiesToText(q) {
+					var result = "";
+					if (q == null)
+					{
+						return result;
+					}
+
+					for (var i = 0; i < q.length; i++) {
+						var quality = this.qualities.filter(function(elem){
+							if(elem.id == q[i]) return elem.name;
+						});
+
+						if (quality != null){
+							var isSelected = false;
+							if (this.qualitySelections.length > 0) {
+								if (this.qualitySelections.indexOf(quality[0].id) > -1)
+								{
+									isSelected = true;
+								}
+							}
+
+							result += (isSelected ? "<b>" : "") + quality[0].name + (isSelected ? "</b>" : "") + ", ";
+						}
+						
+					}
+					return result;
+				},
+			}
+		})
+	</script>
+
+</body>
+</html>
