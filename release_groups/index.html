@@ -15,50 +15,81 @@
 
 			<v-content>
 				<v-container>
-					Filter release groups
-					<v-select v-model="qualitySelections" :key="qualities.name"
-						:items="qualities" item-text="name" item-value="id"
-						label="Select one or more qualities" multiple chips dense></v-select>
-					<v-btn @click="updateQualitySelection()">Update</v-btn>
-					<v-btn @click="clearQualityFilter()">Clear</v-btn>
-				</v-container>
-
-				<v-container>
-					Radarr preferred tags or Sonarr/Radarr indexer restrictions
 					<v-layout row wrap>
-						<v-flex md12>
-							<v-textarea ref="textGeneratedTags" box auto-grow :readonly="true" browser-autocomplete="false"
-								v-model="generatedTags"	@focus="$event.target.select()" />
-						</v-flex>
-						<v-flex md12>
-							<v-btn @click="generateTags()">Generate tags</v-btn>
-						</v-flex>
-					</v-layout>
-				</v-container>
-
-				<v-container>
-					<v-list subheader>
-						<v-subheader>Release groups</v-subheader>
-
-						<v-list-tile :value="true" v-for="(group, i) in groups" :key="groups.name" v-if="group.visible">
-							<v-list-tile-action>
-								<v-checkbox v-model="group.checked"></v-checkbox>
-							</v-list-tile-action>
-
-							<v-list-tile-content>
-								<v-list-tile-title>
-									<v-layout row wrap>
-										<v-flex md6>
-											-{{ group.name }}
+						<v-flex xl6>
+							<v-layout column wrap>
+								<!-- Filters -->
+								<v-flex xl6>
+									<v-layout column wrap>
+										<v-flex xl12>
+											Filter release groups
+											<v-select v-model="qualitySelections" :key="qualities.name"
+												:items="qualities" item-text="name" item-value="id"
+												label="Release qualities" multiple chips dense></v-select>
 										</v-flex>
-										<v-flex md6>
-											<p align="right" v-html="qualitiesToText(group.releaseQualities)"/>
+										<v-flex xl12>
+											<v-layout>
+												<v-flex xl6>
+													<v-checkbox v-model="sceneOnly" label="Scene only"/>
+												</v-flex>
+												<v-flex xl6>
+													<v-checkbox v-model="p2pOnly" label="P2P only"/>
+												</v-flex>
+											</v-layout>
+										</v-flex>
+										<v-flex xl12>
+											<v-btn @click="updateGroupSelection()">Update</v-btn>
+											<v-btn @click="clearQualityFilter()">Clear</v-btn>
 										</v-flex>
 									</v-layout>
-								</v-list-tile-title>
-							</v-list-tile-content>
-						</v-list-tile>
-					</v-list>
+								</v-flex>
+
+								<!-- Tags -->
+								<v-flex xl6>
+									Radarr preferred tags or Sonarr/Radarr indexer restrictions
+									<v-layout column wrap>
+										<v-flex xl12>
+											<v-textarea ref="textGeneratedTags" box auto-grow :readonly="true" browser-autocomplete="false"
+												v-model="generatedTags"	@focus="$event.target.select()" />
+										</v-flex>
+										<v-flex xl12>
+											<v-btn @click="generateTags()">Generate tags</v-btn>
+										</v-flex>
+									</v-layout>
+								</v-flex>
+							</v-layout>
+
+						</v-flex>
+
+						<!-- Release groups -->
+						<v-flex xl6>
+							<v-list subheader>
+								<v-subheader>Release groups</v-subheader>
+
+								<v-list-tile :value="true" v-for="(group, i) in groups" :key="groups.name" v-if="group.visible">
+									<v-list-tile-action>
+										<v-checkbox v-model="group.checked"></v-checkbox>
+									</v-list-tile-action>
+
+									<v-list-tile-content>
+										<v-list-tile-title>
+											<v-layout row wrap>
+												<v-flex xl5>
+													-{{ group.name }}
+												</v-flex>
+												<v-flex xl1>
+													<p>{{ group.scene }}</p>
+												</v-flex>
+												<v-flex xl6>
+													<p align="right" v-html="qualitiesToText(group.releaseQualities)"/>
+												</v-flex>
+											</v-layout>
+										</v-list-tile-title>
+									</v-list-tile-content>
+								</v-list-tile>
+							</v-list>
+						</v-flex>
+					</v-layout>
 				</v-container>
 			</v-content>
 		</v-app>
@@ -80,6 +111,8 @@
 			el: '#app',
 
 			data: () => ({
+				sceneOnly : false,
+				p2pOnly : false,
 				qualitySelections : [],
 				generatedTags : "",
 				groups : [
@@ -97,25 +130,31 @@
 					{ scene: true, name: "USURY", releaseQualities: [bluray720p, bluray1080p] },
 					{ scene: true, name: "GHOULS", releaseQualities: [bluray720p, bluray1080p] },
 					// Non-scene
-					{	scene: false,	name: "FraMeSToR", releaseQualities: [remux1080p, remux2160p] },
+					{ scene: false, name: "HDMaNiAcS", releaseQualities: [bluray720p, bluray1080p, remux1080p] },
+					{	scene: false,	name: "FraMeSToR", releaseQualities: [bluray1080p, remux1080p, remux2160p] },
 					{	scene: false, name: "EPSiLON", releaseQualities: [remux1080p, remux2160p] },
 					{	scene: false,	name: "FGT", releaseQualities: [bluray720p, bluray1080p, remux1080p, remux2160p] },
-					{ scene: false, name: "HDMaNiaCS", releaseQualities: [bluray720p, bluray1080p, remux1080p, remux2160p] },
 				],
 
 				qualities : [
-					{ id: hdtv720p,	name: "HDTV 720p" },
-					{ id: hdtv1080p,	name: "HDTV 1080p" },
-					{ id: web720p,	name: "WEB 720p" },
-					{ id: web1080p,	name: "WEB 1080p" },
-					{ id: bluray720p,	name: "BluRay 720p" },
-					{ id: bluray1080p,	name: "BluRay 1080p" },
-					{ id: remux1080p,	name: "BluRay 1080p REMUX" },
-					{ id: remux2160p,	name: "BluRay 2160p REMUX" },
+					{ id: hdtv720p,	name: "HDTV-720p" },
+					{ id: hdtv1080p,	name: "HDTV-1080p" },
+					{ id: web720p,	name: "WEBDL-720p" },
+					{ id: web1080p,	name: "WEBDL-1080p" },
+					{ id: bluray720p,	name: "Bluray-720p" },
+					{ id: bluray1080p,	name: "Bluray-1080p" },
+					{ id: remux1080p,	name: "Remux-1080p" },
+					{ id: remux2160p,	name: "Remux-2160p" },
 				],
 			}),
 			created: function() {
-				this.updateQualitySelection();
+				// Create reactive properties on groups
+					for (var g = this.groups.length - 1; g >= 0; g--) {
+						this.$set(this.groups[g], 'visible', false); 
+						this.$set(this.groups[g], 'checked', false); 
+					}
+				// Update all qualities
+				this.updateGroupSelection();
 			},
 			methods: {
 				generateTags() {
@@ -132,36 +171,41 @@
 					this.$refs.textGeneratedTags.focus();
 					this.$refs.textGeneratedTags.$refs.input.select();
 				},
-				updateQualitySelection() {
+
+				updateGroupSelection() {
 					if (this.qualitySelections.length == 0)
 					{
+						// Hide and uncheck all groups
 						for (var g = this.groups.length - 1; g >= 0; g--) {
-							if ('visible' in this.groups[g]) { this.groups[g].visible = false; } else { this.$set(this.groups[g], 'visible', false); }
-							if ('checked' in this.groups[g]) { this.groups[g].checked = false; } else { this.$set(this.groups[g], 'checked', false); }
+							this.groups[g].visible = false;
+							this.groups[g].checked = false;
 						}
 						return;
 					}
 
-					for (var q = this.qualitySelections.length - 1; q >= 0; q--) {
-						var quality_id = this.qualitySelections[q];
+					var qualitySelection = this.qualitySelections;
 
-						for (var g = this.groups.length - 1; g >= 0; g--) {
-							if (this.groups[g].releaseQualities.indexOf(quality_id) > -1) {
-								if ('visible' in this.groups[g]) { this.groups[g].visible = true; } else { this.$set(this.groups[g], 'visible', true); }
-								if ('checked' in this.groups[g]) { this.groups[g].checked = true; } else { this.$set(this.groups[g], 'checked', true); }
-							}
-							else
-							{
-								if ('visible' in this.groups[g]) { this.groups[g].visible = false; } else { this.$set(this.groups[g], 'visible', false); }
-								if ('checked' in this.groups[g]) { this.groups[g].checked = false; } else { this.$set(this.groups[g], 'checked', false); }
-							}
-							
+					for (var g = this.groups.length - 1; g >= 0; g--){
+						var group = this.groups[g];
+
+						var groupSelected = this.sceneOnly ? group.scene : true;
+
+						if (groupSelected){
+							var qualityMatch = group.releaseQualities.filter(function(elem){
+								if (qualitySelection.indexOf(elem) > -1) { return true; }
+								return false;
+							});
+							groupSelected = qualityMatch.length > 0;
 						}
+
+						group.visible = groupSelected; 
+						group.checked = groupSelected; 
 					}
+
 				},
 				clearQualityFilter() {
 					this.qualitySelections = [];
-					this.updateQualitySelection();
+					this.updateGroupSelection();
 				},
 				qualitiesToText(q) {
 					var result = "";
