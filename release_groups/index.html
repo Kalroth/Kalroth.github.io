@@ -19,37 +19,40 @@
 						<v-flex md5>
 							<v-layout column wrap>
 								<!-- Filters -->
-								<v-flex xl6>
+								<v-flex class="mb-3">
 									<v-layout column wrap>
-										<v-flex xl12>
+										<v-flex>
 											Filter release groups
 											<v-select v-model="qualitySelections" :key="qualities.name"
 												:items="qualities" item-text="name" item-value="id"
 												label="Release qualities" multiple chips dense></v-select>
 										</v-flex>
-										<v-flex xl12>
+										<v-flex>
 											<v-layout>
-												<v-flex xl6>
+												<v-flex>
 													<v-switch v-model="sceneOnly" label="Scene only"/>
+												</v-flex>
+												<v-flex>
+													<v-switch v-model="hideMulti" label="Hide MULTI"/>
 												</v-flex>
 											</v-layout>
 										</v-flex>
-										<v-flex xl12>
-											<v-btn @click="updateGroupSelection()">Update</v-btn>
+										<v-flex>
+											<v-btn @click="updateGroups()">Update</v-btn>
 											<v-btn @click="clearQualityFilter()">Clear</v-btn>
 										</v-flex>
 									</v-layout>
 								</v-flex>
 
 								<!-- Tags -->
-								<v-flex xl6>
+								<v-flex>
 									Radarr preferred tags or Sonarr/Radarr indexer restrictions
 									<v-layout column wrap>
-										<v-flex xl12>
+										<v-flex>
 											<v-textarea ref="textGeneratedTags" box auto-grow :readonly="true" browser-autocomplete="false"
 												v-model="generatedTags"	@focus="$event.target.select()" />
 										</v-flex>
-										<v-flex xl12>
+										<v-flex>
 											<v-btn @click="generateTags()">Generate tags</v-btn>
 										</v-flex>
 									</v-layout>
@@ -59,18 +62,45 @@
 
 						<!-- Release groups -->
 						<v-flex md7>
-							<v-data-table :headers="groupsHeaders" :items="groups"
-								hide-actions
-								class="elevation-1">
+							<v-data-table :headers="groupsHeaders" :items="groupsItems" v-model="groupsSelected"
+								:pagination.sync="groupsPagination" select-all
+								:rows-per-page-items="groupsRowsPerPageItems"
+								class="elevation-1" item-key="name">
+								<template slot="headers" slot-scope="props">
+									<tr>
+										<th class="ma-0 pl-2 pr-1" width="20">
+											<v-checkbox :input-value="props.all" :indeterminate="props.indeterminate"
+												primary hide-details @click.native="groupsSelectAll"/>
+										</th>
+										<th
+											v-for="header in props.headers"
+											:key="header.text"
+											:class="['column sortable', groupsPagination.descending ? 'desc' : 'asc', header.value === groupsPagination.sortBy ? 'active' : '']"
+											class="ma-0 pl-0 pr-3"
+											@click="groupsChangeSort(header.value)"
+										><span style="float:left;"><v-icon small>arrow_upward</v-icon>{{ header.text }}</span></th>
+									</tr>
+								</template>
+
 								<template slot="items" slot-scope="props">
-									<tr v-if="props.item.visible">
-										<td>
-											<v-checkbox v-model="props.item.checked" :label="props.item.name" :hint="qualitiesToText(props.item.qualities)" :persistent-hint="true"/>
+									<tr :active="props.selected" @click="props.selected = !props.selected">
+										<td class="ma-0 pt-3 pb-0 pl-2 pr-1" width="20">
+											<v-checkbox :input-value="props.selected" primary />
 										</td>
-										<td class="text-xs-right">
+										<td class="ma-0 pl-1 py-0">
+											<label class="v-label" style="left: 0px; right: auto; position: relative;">{{ props.item.name }}</label>
+											<div class="v-messages">
+												<div class="v-messages__wrapper">
+													<div class="v-messages__message">
+														<span v-html="qualitiesToText(props.item.qualities)" />
+													</div>
+												</div>
+											</div>
+										</td>
+										<td class="ma-0 pl-3 pr-1" width="10">
 											<v-icon v-if="props.item.scene">done</v-icon>
 										</td>
-										<td class="text-xs-right">
+										<td class="ma-0 pl-3 pr-1" width="10">
 											<v-icon v-if="props.item.multi">warning</v-icon>
 										</td>
 									</tr>
@@ -88,25 +118,36 @@
 	<script>
 		const hdtv720p = 1;
 		const hdtv1080p = 2;
-		const web720p = 4;
-		const web1080p = 8;
-		const bluray720p = 16;
-		const bluray1080p = 32;
-		const remux1080p = 64;
-		const remux2160p = 128;
+		const hdtv2160p = 3;
+		const web720p = 10;
+		const web1080p = 11;
+		const web2160p = 12;
+		const bluray720p = 20;
+		const bluray1080p = 21;
+		const bluray2160p = 22;
+		const remux1080p = 30;
+		const remux2160p = 31;
 
 		new Vue({
 			el: '#app',
 
 			data: () => ({
 				sceneOnly : false,
+				hideMulti : false,
 				qualitySelections : [],
 				generatedTags : "",
+
+				groupsPagination: {
+					sortBy: 'name'
+				},
+				groupsRowsPerPageItems: [ 10,20,40,{"text":"$vuetify.dataIterator.rowsPerPageAll","value":-1} ],
+				groupsSelected: [],
 				groupsHeaders: [
 					{ text: 'Name', value: 'name' },
 					{ text: 'Scene', value: 'scene', align: 'right' },
 					{ text: 'Multi', value: 'multi', align: 'right' },
 				],
+				groupsItems : [],
 
 				groups : [
 					// Scene
@@ -138,7 +179,10 @@
 					{ scene: true, name: "RUSTED", qualities: [bluray720p, bluray1080p], multi: false },
 					{ scene: true, name: "NODLABS", qualities: [bluray720p, bluray1080p], multi: false },
 
+					{ scene: true, name: "TERMiNAL", qualities: [bluray2160p, remux2160p], multi: false },
+
 					// MULTI
+					{ scene: true, name: "LOST", qualities: [bluray720p, bluray1080p], multi: true },
 					{ scene: true, name: "VENUE", qualities: [bluray720p, bluray1080p], multi: true },
 
 					// Non-scene
@@ -146,53 +190,69 @@
 					{	scene: false,	name: "FraMeSToR", qualities: [bluray1080p, remux1080p, remux2160p], multi: false },
 					{	scene: false, name: "EPSiLON", qualities: [remux1080p, remux2160p], multi: false },
 					{	scene: false,	name: "FGT", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: false },
+					{	scene: false,	name: "LEGi0N", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: false },
+					{	scene: false,	name: "NTb", qualities: [bluray720p, bluray1080p, web720p, web1080p], multi: false },
+					{	scene: false,	name: "NTG", qualities: [web1080p], multi: false },
+					// MULTI
+					{	scene: false,	name: "TUSAHD", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: true },
+					// 
+					{	scene: false,	name: "EVO", qualities: [web1080p], multi: false },
+					{ scene: false, name: "SiGMA", qualities: [web1080p], multi: false },
+					{ scene: false, name: "TrollHD", qualities: [web1080p, web2160p], multi: false },
+
 				],
 
 				qualities : [
 					{ id: hdtv720p,	name: "HDTV-720p" },
 					{ id: hdtv1080p,	name: "HDTV-1080p" },
+					{ id: hdtv2160p,	name: "HDTV-2160p" },
 					{ id: web720p,	name: "WEBDL-720p" },
 					{ id: web1080p,	name: "WEBDL-1080p" },
+					{ id: web2160p,	name: "WEBDL-2160p" },
 					{ id: bluray720p,	name: "Bluray-720p" },
 					{ id: bluray1080p,	name: "Bluray-1080p" },
+					{ id: bluray2160p,	name: "Bluray-2160p" },
 					{ id: remux1080p,	name: "Remux-1080p" },
 					{ id: remux2160p,	name: "Remux-2160p" },
 				],
 			}),
 			created: function() {
-				// Create reactive properties on groups
-				for (var g = this.groups.length - 1; g >= 0; g--) {
-					this.$set(this.groups[g], 'visible', false); 
-					this.$set(this.groups[g], 'checked', false); 
-				}
 				// Update all qualities
-				this.updateGroupSelection();
+				this.updateGroups();
 			},
 			methods: {
 				generateTags() {
 					this.generatedTags = "";
 					var s = "";
-					for (var i = 0; i < this.groups.length; i++) {
-						if (this.groups[i].checked == true)
-						{
-							s += "-" + this.groups[i].name + ",";
-						}
+					for (var i = this.groupsSelected.length - 1; i >= 0; i--) {
+						s += "-" + this.groupsSelected[i].name + ",";
 					}
 					this.generatedTags = s.substring(0,s.length-1);
 					this.$refs.textGeneratedTags.focus();
 					this.$refs.textGeneratedTags.$refs.input.select();
 				},
 
-				updateGroupSelection() {
-					if (this.qualitySelections.length == 0)
-					{
-						// Hide and uncheck all groups
-						for (var g = this.groups.length - 1; g >= 0; g--) {
-							this.groups[g].visible = false;
-							this.groups[g].checked = false;
-						}
-						return;
+				groupsSelectAll() {
+					if (this.groupsSelected.length)
+						this.groupsSelected = []
+					else
+						this.groupsSelected = this.groupsItems.slice()
+				},
+
+				groupsChangeSort(column) {
+					if (this.groupsPagination.sortBy === column) {
+						this.groupsPagination.descending = !this.groupsPagination.descending
+					} else {
+						this.groupsPagination.sortBy = column
+						this.groupsPagination.descending = false
 					}
+				},
+
+				updateGroups() {
+					this.groupsSelected = [];
+					this.groupsItems = [];
+	
+					if (this.qualitySelections.length == 0)	return;
 
 					var qualitySelection = this.qualitySelections;
 
@@ -200,6 +260,9 @@
 						var group = this.groups[g];
 
 						var groupSelected = this.sceneOnly ? group.scene : true;
+						if (groupSelected){
+							groupSelected = this.hideMulti ? !group.multi : true;
+						}
 
 						if (groupSelected){
 							var qualityMatch = group.qualities.filter(function(elem){
@@ -209,14 +272,16 @@
 							groupSelected = qualityMatch.length > 0;
 						}
 
-						group.visible = groupSelected; 
-						group.checked = groupSelected; 
+						if (groupSelected){
+							this.groupsItems.push(group);
+							this.groupsSelected.push(group);
+						}
 					}
 
 				},
 				clearQualityFilter() {
 					this.qualitySelections = [];
-					this.updateGroupSelection();
+					this.updateGroups();
 				},
 				qualitiesToText(q) {
 					var result = "";
