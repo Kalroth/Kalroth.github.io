@@ -214,10 +214,6 @@
 					{ id: remux2160p,	name: "Remux-2160p" },
 				],
 			}),
-			created: function() {
-				// Update all qualities
-				this.updateGroups();
-			},
 			methods: {
 				generateTags() {
 					this.generatedTags = "-" + this.groupsSelected
@@ -279,7 +275,8 @@
 					this.qualitySelections = [];
 					this.sceneOnly = false;
 					this.hideMulti = false;
-					this.updateGroups();
+					this.generatedTags = "";
+					this.groupsSelected = [];
 				},
 				qualitiesToText(q) {
 					var result = "";
