@@ -89,7 +89,7 @@
 											<div class="v-messages">
 												<div class="v-messages__wrapper">
 													<div class="v-messages__message">
-														<span v-html="qualitiesToText(props.item.qualities)" />
+														<span v-html="buildGroupHint(props.item)" />
 													</div>
 												</div>
 											</div>
@@ -184,20 +184,38 @@
 					{ scene: true, name: "UKDHD", qualities: [bluray720p, bluray1080p], multi: true },
 
 					// Non-scene
-					{ scene: false, name: "HDMaNiAcS", qualities: [bluray720p, bluray1080p, remux1080p], multi: false },
-					{	scene: false,	name: "FraMeSToR", qualities: [bluray1080p, remux1080p, remux2160p], multi: false },
-					{	scene: false, name: "EPSiLON", qualities: [remux1080p, remux2160p], multi: false },
-					{	scene: false,	name: "FGT", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: false },
-					{	scene: false,	name: "LEGi0N", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: false },
-					{	scene: false,	name: "NTb", qualities: [bluray720p, bluray1080p, web720p, web1080p], multi: false },
-					{	scene: false,	name: "NTG", qualities: [web1080p], multi: false },
-					{	scene: false,	name: "FANDANGO", qualities: [bluray720p, bluray1080p], multi: false },
+					{ scene: false, name: "HDMaNiAcS", qualities: [bluray720p, bluray1080p, remux1080p], multi: false, source: "HD-Torrents" },
+					{ scene: false, name: "KRaLiMaRKo", qualities: [remux1080p], multi: false, source: "HD-Torrents" },
+					{ scene: false, name: "HiDt", qualities: [bluray720p, bluray1080p], multi: false, source: "HD-Torrents" },
+					{ scene: false,	name: "FraMeSToR", qualities: [bluray1080p, remux1080p, remux2160p], multi: false, source: "BeyondHD" },
+					{ scene: false, name: "EPSiLON", qualities: [remux1080p, remux2160p], multi: false, source: "PrivateHD" },
+					{ scene: false,	name: "FGT", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: false, source: "RARBG" },
+					{ scene: false,	name: "LEGi0N", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: false, source: "HD4Free" },
+					{ scene: false,	name: "NTb", qualities: [bluray720p, bluray1080p, web720p, web1080p], multi: false },
+					{ scene: false,	name: "NTG", qualities: [web1080p], multi: false },
+					{ scene: false,	name: "FANDANGO", qualities: [bluray720p, bluray1080p], multi: false, source: "HDBits" },
+					{ scene: false,	name: "CtrlHD", qualities: [bluray720p, bluray1080p], multi: false, source: "HDBits" },
+					{ scene: false,	name: "TayTO", qualities: [bluray720p, bluray1080p], multi: false, source: "HDBits" },
+					{ scene: false,	name: "D-Z0N3", qualities: [bluray720p, bluray1080p], multi: false, source: "Awesome-HD" },
+					{ scene: false, name: "PmP", qualities: [remux1080p], multi: false },
+					{ scene: false, name: "eXcommunicado", qualities: [remux1080p], multi: false },
+					{ scene: false, name: "iFT", qualities: [remux1080p], multi: false, source: "IPTorrents" },
+					{ scene: false,	name: "BMF", qualities: [bluray1080p, remux1080p], multi: false, source: "Awesome-HD" },
+					{ scene: false,	name: "HiFi", qualities: [bluray1080p, remux1080p], multi: false, source: "Awesome-HD" },
+					{ scene: false,	name: "NCmt", qualities: [bluray720p, bluray1080p, remux1080p], multi: false, source: "Awesome-HD" },
+					{ scene: false,	name: "HDH", qualities: [bluray720p, bluray1080p, remux1080p], multi: false, source: "HDHome" },
+					{ scene: false,	name: "BluPanther", qualities: [bluray720p, bluray1080p, remux1080p], multi: false, source: "HD-Space" },
+					{ scene: false,	name: "LorD", qualities: [bluray720p, bluray1080p, remux1080p], multi: false, source: "HD-Torrents" },
+					{ scene: false,	name: "BluDragon", qualities: [bluray720p, bluray1080p, remux1080p], multi: false, source: "HD-Torrents" },
+
+					{	scene: false,	name: "EVO", qualities: [web720p, web1080p, bluray720p, bluray1080p], multi: false },
 					// MULTI
-					{	scene: false,	name: "TUSAHD", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: true },
+					{ scene: false,	name: "TUSAHD", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: true },
 					// 
-					{	scene: false,	name: "EVO", qualities: [web1080p], multi: false },
+					{ scene: false,	name: "OMEGA", qualities: [web720p, web1080p, remux1080p], multi: false },
 					{ scene: false, name: "SiGMA", qualities: [web1080p], multi: false },
 					{ scene: false, name: "TrollHD", qualities: [web1080p, web2160p], multi: false },
+					{ scene: false, name: "R2D2", qualities: [web720p, web1080p, remux1080p], multi: false, source: "HQSource" },
 				],
 
 				qualities : [
@@ -278,16 +296,21 @@
 					this.generatedTags = "";
 					this.groupsSelected = [];
 				},
-				qualitiesToText(q) {
+				buildGroupHint(item) {
 					var result = "";
-					if (q == null)
+					if (item == null)
 					{
 						return result;
 					}
 
-					for (var i = 0; i < q.length; i++) {
+					if (item.source != null)
+					{
+						result += "[" + item.source + "] ";
+					}
+
+					for (var i = 0; i < item.qualities.length; i++) {
 						var quality = this.qualities.filter(function(elem){
-							if(elem.id == q[i]) return elem.name;
+							if(elem.id == item.qualities[i]) return elem.name;
 						});
 
 						if (quality != null){
