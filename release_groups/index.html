@@ -25,21 +25,21 @@
 											Filter release groups
 											<v-select v-model="qualitySelections" :key="qualities.name"
 												:items="qualities" item-text="name" item-value="id"
+												v-on:change="updateGroups()"
 												label="Release qualities" multiple chips dense></v-select>
 										</v-flex>
 										<v-flex>
 											<v-layout>
 												<v-flex>
-													<v-switch v-model="sceneOnly" label="Scene only"/>
+													<v-switch v-model="sceneOnly" label="Scene only" v-on:change="updateGroups()"/>
 												</v-flex>
 												<v-flex>
-													<v-switch v-model="hideMulti" label="Hide MULTI"/>
+													<v-switch v-model="hideMulti" label="Hide MULTI" v-on:change="updateGroups()"/>
 												</v-flex>
 											</v-layout>
 										</v-flex>
 										<v-flex>
-											<v-btn color="teal darken-4 white--text" @click="updateGroups()">Update</v-btn>
-											<v-btn @click="clearQualityFilter()">Clear</v-btn>
+											<v-btn color="info" @click="resetFilter()">Reset filter</v-btn>
 										</v-flex>
 									</v-layout>
 								</v-flex>
@@ -50,10 +50,7 @@
 									<v-layout column wrap>
 										<v-flex>
 											<v-textarea ref="textGeneratedTags" auto-grow :readonly="true" browser-autocomplete="false"
-												v-model="generatedTags"	hint="Copy selected tags to Radarr or Sonarr" />
-										</v-flex>
-										<v-flex>
-											<v-btn @click="generateTags()">Generate tags</v-btn>
+												v-model="generatedTags"	hint="Copy selected tags to Radarr or Sonarr" v-on:focus="$event.target.select()"/>
 										</v-flex>
 									</v-layout>
 								</v-flex>
@@ -227,11 +224,6 @@
 						.sort((a, b) => a.name > b.name)
 						.map(x => x.name)
 						.join(",-");
-
-					this.$nextTick(function() {
-						this.$refs.textGeneratedTags.focus();
-						this.$refs.textGeneratedTags.$refs.input.select();
-					});
 				},
 
 				groupsSelectAll() {
@@ -278,11 +270,15 @@
 							this.groupsItems.push(group);
 							this.groupsSelected.push(group);
 						}
+
+						this.generateTags();
 					}
 
 				},
-				clearQualityFilter() {
+				resetFilter() {
 					this.qualitySelections = [];
+					this.sceneOnly = false;
+					this.hideMulti = false;
 					this.updateGroups();
 				},
 				qualitiesToText(q) {
