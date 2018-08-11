@@ -9,14 +9,14 @@
 <body>
 	<div id="app">
 		<v-app>
-			<v-toolbar app fixed clipped-left>
+			<v-toolbar app fixed clipped-left color="teal darken-4 white--text">
 				<v-toolbar-title>Create Radarr/Sonarr preferred tags or indexer restrictions</v-toolbar-title>
 			</v-toolbar>
 
 			<v-content>
 				<v-container>
 					<v-layout row wrap>
-						<v-flex md5>
+						<v-flex md5 class="ma-0 px-1">
 							<v-layout column wrap>
 								<!-- Filters -->
 								<v-flex class="mb-3">
@@ -38,7 +38,7 @@
 											</v-layout>
 										</v-flex>
 										<v-flex>
-											<v-btn @click="updateGroups()">Update</v-btn>
+											<v-btn color="teal darken-4 white--text" @click="updateGroups()">Update</v-btn>
 											<v-btn @click="clearQualityFilter()">Clear</v-btn>
 										</v-flex>
 									</v-layout>
@@ -49,8 +49,8 @@
 									Radarr preferred tags or Sonarr/Radarr indexer restrictions
 									<v-layout column wrap>
 										<v-flex>
-											<v-textarea ref="textGeneratedTags" box auto-grow :readonly="true" browser-autocomplete="false"
-												v-model="generatedTags"	@focus="$event.target.select()" />
+											<v-textarea ref="textGeneratedTags" auto-grow :readonly="true" browser-autocomplete="false"
+												v-model="generatedTags"	hint="Copy selected tags to Radarr or Sonarr" />
 										</v-flex>
 										<v-flex>
 											<v-btn @click="generateTags()">Generate tags</v-btn>
@@ -61,7 +61,7 @@
 						</v-flex>
 
 						<!-- Release groups -->
-						<v-flex md7>
+						<v-flex md7 class="ma-0 px-1">
 							<v-data-table :headers="groupsHeaders" :items="groupsItems" v-model="groupsSelected"
 								:pagination.sync="groupsPagination" select-all
 								:rows-per-page-items="groupsRowsPerPageItems"
@@ -184,6 +184,7 @@
 					// MULTI
 					{ scene: true, name: "LOST", qualities: [bluray720p, bluray1080p], multi: true },
 					{ scene: true, name: "VENUE", qualities: [bluray720p, bluray1080p], multi: true },
+					{ scene: true, name: "UKDHD", qualities: [bluray720p, bluray1080p], multi: true },
 
 					// Non-scene
 					{ scene: false, name: "HDMaNiAcS", qualities: [bluray720p, bluray1080p, remux1080p], multi: false },
@@ -193,13 +194,13 @@
 					{	scene: false,	name: "LEGi0N", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: false },
 					{	scene: false,	name: "NTb", qualities: [bluray720p, bluray1080p, web720p, web1080p], multi: false },
 					{	scene: false,	name: "NTG", qualities: [web1080p], multi: false },
+					{	scene: false,	name: "FANDANGO", qualities: [bluray720p, bluray1080p], multi: false },
 					// MULTI
 					{	scene: false,	name: "TUSAHD", qualities: [bluray720p, bluray1080p, remux1080p, remux2160p], multi: true },
 					// 
 					{	scene: false,	name: "EVO", qualities: [web1080p], multi: false },
 					{ scene: false, name: "SiGMA", qualities: [web1080p], multi: false },
 					{ scene: false, name: "TrollHD", qualities: [web1080p, web2160p], multi: false },
-
 				],
 
 				qualities : [
@@ -222,14 +223,15 @@
 			},
 			methods: {
 				generateTags() {
-					this.generatedTags = "";
-					var s = "";
-					for (var i = this.groupsSelected.length - 1; i >= 0; i--) {
-						s += "-" + this.groupsSelected[i].name + ",";
-					}
-					this.generatedTags = s.substring(0,s.length-1);
-					this.$refs.textGeneratedTags.focus();
-					this.$refs.textGeneratedTags.$refs.input.select();
+					this.generatedTags = "-" + this.groupsSelected
+						.sort((a, b) => a.name > b.name)
+						.map(x => x.name)
+						.join(",-");
+
+					this.$nextTick(function() {
+						this.$refs.textGeneratedTags.focus();
+						this.$refs.textGeneratedTags.$refs.input.select();
+					});
 				},
 
 				groupsSelectAll() {
