@@ -82,7 +82,7 @@
 								<template slot="items" slot-scope="props">
 									<tr :active="props.selected" @click="props.selected = !props.selected">
 										<td class="ma-0 pt-3 pb-0 pl-2 pr-1" width="20">
-											<v-checkbox :input-value="props.selected" primary />
+											<v-checkbox :input-value="props.selected" primary v-on:change="generateTags()"/>
 										</td>
 										<td class="ma-0 pl-1 py-0">
 											<label class="v-label" style="left: 0px; right: auto; position: relative;">{{ props.item.name }}</label>
